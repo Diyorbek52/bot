@@ -31,7 +31,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text(
         "Пришли название группы так, как оно в шапке Excel "
         "(можно часть текста — найду по вхождению).\n\n"
-        "Пример: `И-9-2025 (О)`",
+        "Пример: `И-9-2025 (О)" \
+        "`",
         parse_mode="Markdown",
     )
 
