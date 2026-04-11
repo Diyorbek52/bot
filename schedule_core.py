@@ -333,17 +333,40 @@ def _windows_font_path(bold: bool) -> Optional[str]:
     return path if os.path.isfile(path) else None
 
 
+# === ДОБАВЬ В САМЫЙ ВЕРХ (замени функцию load_font полностью) ===
+
+from PIL import ImageFont
+import os
+
+
 def load_font(size: int, bold: bool = False):
-    p = _windows_font_path(bold)
-    if p:
-        try:
-            return ImageFont.truetype(p, size=size)
-        except OSError:
-            pass
+    """
+    Универсальная загрузка шрифта:
+    - Linux (Railway/VPS) → DejaVuSans
+    - Windows → Arial
+    """
+
+    # 1. Linux (Railway, VPS)
+    linux_paths = [
+        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+        "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+    ]
+
+    for path in linux_paths:
+        if os.path.exists(path):
+            try:
+                return ImageFont.truetype(path, size=size)
+            except:
+                pass
+
+    # 2. Windows fallback
     try:
-        return ImageFont.truetype("arial.ttf", size=size)
-    except Exception:
-        return ImageFont.load_default()
+        return ImageFont.truetype("arialbd.ttf" if bold else "arial.ttf", size=size)
+    except:
+        pass
+
+    # 3. Последний вариант (нежелательно)
+    return ImageFont.load_default()
 
 
 def _parse_weekday_index(day_cell: str) -> Optional[int]:
