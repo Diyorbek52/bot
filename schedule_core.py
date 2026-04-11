@@ -2,7 +2,7 @@
 Чтение расписания из Excel (шаблон с группами в шапке) и сохранение в PNG.
 Используется локальным ботом (консоль) и при желании — Telegram-ботом.
 """
-
+from PIL import ImageFont
 import os
 import re
 from collections import defaultdict
@@ -335,38 +335,15 @@ def _windows_font_path(bold: bool) -> Optional[str]:
 
 # === ДОБАВЬ В САМЫЙ ВЕРХ (замени функцию load_font полностью) ===
 
-from PIL import ImageFont
-import os
-
 
 def load_font(size: int, bold: bool = False):
-    """
-    Универсальная загрузка шрифта:
-    - Linux (Railway/VPS) → DejaVuSans
-    - Windows → Arial
-    """
+    font_path = os.path.join(os.path.dirname(__file__), "DejaVuSans.ttf")
 
-    # 1. Linux (Railway, VPS)
-    linux_paths = [
-        "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" if bold else "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
-        "/usr/share/fonts/dejavu/DejaVuSans.ttf",
-    ]
-
-    for path in linux_paths:
-        if os.path.exists(path):
-            try:
-                return ImageFont.truetype(path, size=size)
-            except:
-                pass
-
-    # 2. Windows fallback
     try:
-        return ImageFont.truetype("arialbd.ttf" if bold else "arial.ttf", size=size)
-    except:
-        pass
-
-    # 3. Последний вариант (нежелательно)
-    return ImageFont.load_default()
+        return ImageFont.truetype(font_path, size=size)
+    except Exception as e:
+        print("Ошибка загрузки шрифта:", e)
+        return ImageFont.load_default()
 
 
 def _parse_weekday_index(day_cell: str) -> Optional[int]:
