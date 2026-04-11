@@ -249,24 +249,28 @@ def extract_group_schedule(
         )
 
     q = group_query.strip()
-    q_lower = q.lower()
-    matches = [name for name in groups.keys() if q_lower in name.lower()]
+    norm_q = _normalize_group_name(q)
+    norm_groups = {name: _normalize_group_name(name) for name in groups.keys()}
+   
+    matches = [name for name, norm_name in norm_groups.items() if norm_name == norm_q]
     if not matches:
-        matches = [name for name in groups.keys() if _norm_text(name).lower() == q_lower]
+        if re.search(r"\d{2}$", norm_q):  # оканчивается на 2 цифры
+            long_q = norm_q[:-2] + "20" + norm_q[-2:]  # И923 → И92023
+        matches = [name for name, norm_name in norm_groups.items() if norm_name == long_q]
     if len(matches) != 1:
         preview = "\n".join(f"- {n}" for n in list(groups.keys())[:30])
-        extra = "\n... (список обрезан)" if len(groups) > 30 else ""
-        if not matches:
-            raise ValueError(
-                "Группа не найдена.\n"
-                f"Ты написал: {q!r}\n\n"
-                "Вот примеры названий, которые я вижу в файле:\n"
-                f"{preview}{extra}"
-            )
+    extra = "\n... (список обрезан)" if len(groups) > 30 else ""
+    if not matches:
         raise ValueError(
-            "Слишком много совпадений, уточни название группы.\n"
-            f"Подходят: {', '.join(matches)}"
+            "Группа не найдена.\n"
+            f"Ты написал: {q!r}\n\n"
+            "Вот примеры названий, которые я вижу в файле:\n"
+            f"{preview}{extra}"
         )
+    raise ValueError(
+        "Слишком много совпадений, уточни название группы.\n"
+        f"Подходят: {', '.join(matches)}"
+    )
 
     group_name = matches[0]
     subj_col, room_col = groups[group_name]
@@ -333,8 +337,6 @@ def _windows_font_path(bold: bool) -> Optional[str]:
     return path if os.path.isfile(path) else None
 
 
-# === ДОБАВЬ В САМЫЙ ВЕРХ (замени функцию load_font полностью) ===
-
 
 def load_font(size: int, bold: bool = False):
     font_path = os.path.join(os.path.dirname(__file__), "DejaVuSans.ttf")
@@ -345,6 +347,11 @@ def load_font(size: int, bold: bool = False):
         print("Ошибка загрузки шрифта:", e)
         return ImageFont.load_default()
 
+def _normalize_group_name(group: str) -> str:
+    """И‑9‑2023 → И9 → И9."""
+    # оставляем только буквы и цифры, приводим к верхнему регистру
+    cleaned = re.sub(r"[^a-zA-Z0-9А-ЯЁ]", "", group.strip(), flags=re.IGNORECASE)
+    return cleaned.upper()
 
 def _parse_weekday_index(day_cell: str) -> Optional[int]:
     """Индекс 0..4 для пн–пт или None (выходной / не распознано)."""
