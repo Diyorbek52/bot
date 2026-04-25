@@ -1,3 +1,9 @@
+"""
+Telegram-бот: принимает название группы, шлёт картинку расписания.
+Нужен токен в .env: TELEGRAM_BOT_TOKEN=...
+"""
+
+
 import os
 
 from dotenv import load_dotenv
