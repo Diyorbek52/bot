@@ -12,18 +12,16 @@ from openpyxl import load_workbook
 from openpyxl.worksheet.worksheet import Worksheet
 from PIL import Image, ImageDraw, ImageFont
 
-# Макет картинки (сетка недели)
 IMAGE_WIDTH = 1100
 LEFT_PADDING = 24
 TOP_PADDING = 20
 TITLE_HEIGHT = 48
 HEADER_ROW_HEIGHT = 44
 TIME_COL_WIDTH = 158
-DATA_ROW_HEIGHT = 92  # высота строки пары (несколько строк текста)
+DATA_ROW_HEIGHT = 92  
 
-# Как на образце: пн–пт и 5 временных окон
 WEEKDAYS_RU = ["понедельник", "вторник", "среда", "четверг", "пятница"]
-# (начало в минутах от полуночи, конец, подпись в первом столбце)
+
 TIME_SLOTS: List[Tuple[int, int, str]] = [
     (9 * 60 + 0, 10 * 60 + 30, "9:00-10:30"),
     (10 * 60 + 40, 12 * 60 + 10, "10:40-12:10"),
@@ -32,7 +30,6 @@ TIME_SLOTS: List[Tuple[int, int, str]] = [
     (16 * 60 + 0, 17 * 60 + 30, "16:00-17:30"),
 ]
 
-# Распознавание дня из ячейки «Понедельник 23.03.2026»
 _DAY_WORD_TO_INDEX = {
     "понедельник": 0,
     "вторник": 1,
@@ -332,8 +329,6 @@ def _windows_font_path(bold: bool) -> Optional[str]:
     return path if os.path.isfile(path) else None
 
 
-# === ДОБАВЬ В САМЫЙ ВЕРХ (замени функцию load_font полностью) ===
-
 
 def load_font(size: int, bold: bool = False):
     font_path = os.path.join(os.path.dirname(__file__), "DejaVuSans.ttf")
@@ -346,16 +341,13 @@ def load_font(size: int, bold: bool = False):
 
 
 def _parse_weekday_index(day_cell: str) -> Optional[int]:
-    """Индекс 0..4 для пн–пт или None (выходной / не распознано)."""
     if not day_cell:
         return None
     t = day_cell.lower().strip()
-    # Сначала по словам в тексте (надёжнее, чем \\b с кириллицей)
     words = re.findall(r"[а-яё]+", t)
     for w in words:
         if w in _DAY_WORD_TO_INDEX:
             return _DAY_WORD_TO_INDEX[w]
-    # Подстрока: длинные названия раньше
     for word in sorted(_DAY_WORD_TO_INDEX.keys(), key=len, reverse=True):
         if word in t:
             return _DAY_WORD_TO_INDEX[word]
@@ -419,7 +411,6 @@ def _format_cell_line(row: LessonRow) -> str:
 
 
 def _lessons_to_week_grid(rows: List[LessonRow]) -> List[List[str]]:
-    """5 строк (пары) × 5 столбцов (дни)."""
     cells: Dict[Tuple[int, int], List[str]] = defaultdict(list)
     for row in rows:
         d = _parse_weekday_index(row.day_cell)
@@ -472,9 +463,7 @@ def _wrap_lines_to_width(draw: ImageDraw.ImageDraw, text: str, font, max_width: 
 
 
 def render_schedule_png(rows: List[LessonRow], title: str) -> str:
-    """
-    Картинка в формате сетки: строки — пары времени, столбцы — пн–пт (как на образце).
-    """
+    
     grid = _lessons_to_week_grid(rows)
 
     n_slots = len(TIME_SLOTS)
@@ -517,14 +506,12 @@ def render_schedule_png(rows: List[LessonRow], title: str) -> str:
             w = data_col_w
         return x0, y0, x0 + w, y0 + h
 
-    # Заголовки: пустая угловая ячейка + дни
     for c in range(n_days + 1):
         for r in range(n_slots + 1):
             x0, y0, x1, y1 = cell_rect(c, r)
             draw.rectangle([x0, y0, x1, y1], outline=border, width=1)
 
-    # Угол (0,0) — пусто
-    # Первая строка: дни
+    
     for d in range(n_days):
         x0, y0, x1, y1 = cell_rect(d + 1, 0)
         name = WEEKDAYS_RU[d]
@@ -535,7 +522,6 @@ def render_schedule_png(rows: List[LessonRow], title: str) -> str:
         ty = y0 + (y1 - y0 - th) // 2
         draw.text((tx, ty), name, font=header_font, fill="black")
 
-    # Столбец времени + тело
     pad = 8
     for si in range(n_slots):
         x0, y0, x1, y1 = cell_rect(0, si + 1)
