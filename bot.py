@@ -1,11 +1,3 @@
-"""
-Telegram-бот: принимает название группы, шлёт картинку расписания.
-Нужен токен в .env: TELEGRAM_BOT_TOKEN=...
-
-Запуск: python bot.py
-Локально без Telegram: python local_bot.py
-"""
-
 import os
 
 from dotenv import load_dotenv
